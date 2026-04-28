@@ -27,6 +27,8 @@ Whether you're showcasing a SaaS dashboard, a mobile app, or a sleek new AI tool
 - **🖱️ Autonomous Cursor Simulation:** Built-in formulas for animating a realistic, floating cursor with hover and click states.
 - **🎛️ Audio Mixing Standards:** Integrated `-16 LUFS` normalization rules and ducking pipelines for professional Voiceover syncing.
 - **💻 Data-Driven UIs:** Playbooks for generating fake data and feeding it into animated React components (charts, number tickers, feedback cards).
+- **✨ Anthropic Design Language:** Built-in rules for Blur-Fade word reveals, abstract data morphing, and Quartic easing for that high-end "Claude" aesthetic.
+- **🤖 Local AI Powerups:** Direct integration with `faster-whisper` for unlimited free transcription and `chatterbox` for local high-fidelity voice cloning.
 
 ## 📂 Repository Structure
 
@@ -39,6 +41,8 @@ remotion-video-skill/
 ├── LICENSE                           # MIT License
 └── references/                       # Premium Knowledge Playbooks
     ├── animations.md                 # Easing, springs, and sequence examples
+    ├── anthropic_design.md           # NEW: Blur-fade, sparkles, and data morphing
+    ├── local_ai_integration.md       # NEW: Whisper, Chatterbox, and Subtitle engine
     ├── audio_mixing_pipeline.md      # VO syncing and loudness normalization
     ├── cursor.md                     # SVG Cursor animation math
     ├── ffmpeg_export_pipeline.md     # Encoding specs for web delivery

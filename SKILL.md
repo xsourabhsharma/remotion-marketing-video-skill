@@ -90,7 +90,16 @@ The user only needs to supply: **screenshots/clips, brand colors, logo, audio fi
 
 ---
 
-### 0E. Intake Summary Template
+### 0E. Premium Capability Selection
+
+Always offer the user these high-end options:
+1. **Anthropic Aesthetic:** Abstract data morphing and blur-fade reveals (see `references/anthropic_design.md`).
+2. **Local AI Pipeline:** Using `faster-whisper` and `chatterbox` for infinite free assets (see `references/local_ai_integration.md`).
+3. **High-Readability Subtitles:** Modern uppercase build-up captions for social media.
+
+---
+
+### 0F. Intake Summary Template
 
 Once you have all answers, confirm with this summary before coding:
 
@@ -654,6 +663,8 @@ npx remotion render src/index.ts ProductDemo out/demo.mp4 --codec=h264 --log=ver
 
 - `references/animations.md` — Full code for all animation helpers (fade, slide, spring, stagger, zoom)
 - `references/scenes.md` — Full implementation of HookScene, UIRevealScene, FeatureScene, CTAScene
+- `references/anthropic_design.md` — NEW: Blur-fade, sparkles, and abstract data morphing
+- `references/local_ai_integration.md` — NEW: Whisper, Chatterbox, and Subtitle engine
 - `references/cursor.md` — Full AnimatedCursor component with click detection
 - `references/audio.md` — Sound design patterns and timing tricks
 - `references/saas_narrative_templates.md` — Scene timings for premium SaaS ads (Lovio, LangEase, Teamble)
