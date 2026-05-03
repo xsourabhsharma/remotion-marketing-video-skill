@@ -1,89 +1,57 @@
-# Local AI Powerups for Remotion
+# Local AI Integration Reference
 
-This playbook contains the integration rules for using free, local open-source models to handle high-volume video automation (transcription and voice cloning).
+Use this file when transcription, subtitle timing, or generated voiceover is requested. Keep all generated media in the user's target video project, not in this skill repository.
 
----
+## Local Transcription
 
-## 1. Local Transcription (Faster-Whisper)
-Use this to get free, unlimited word-level timestamps without API costs.
+Use `faster-whisper` for local word timings when a voiceover or screen recording already exists.
 
-### Installation
 ```bash
-pip install faster-whisper
+uv pip install faster-whisper
 ```
 
-### Automation Script (Python)
-Save as `transcribe_to_frames.py`:
+Example script for a target project:
+
 ```python
 import json
 from faster_whisper import WhisperModel
 
-model = WhisperModel("small", device="cpu", compute_type="int8")
-segments, info = model.transcribe("public/video.mp4", task="translate", word_timestamps=True)
+FPS = 30
+INPUT = "public/audio/voiceover.wav"
+OUTPUT = "src/data/transcript.json"
 
-words_data = []
+model = WhisperModel("small", device="cpu", compute_type="int8")
+segments, _ = model.transcribe(INPUT, word_timestamps=True)
+
+words = []
 for segment in segments:
-    for word in segment.words:
-        words_data.append({
+    for word in segment.words or []:
+        words.append({
             "word": word.word.strip(),
-            "startFrame": round(word.start * 30), # Assuming 30fps
-            "endFrame": round(word.end * 30)
+            "startFrame": round(word.start * FPS),
+            "endFrame": round(word.end * FPS),
         })
 
-with open("src/transcript.json", "w") as f:
-    json.dump(words_data, f, indent=2)
+with open(OUTPUT, "w", encoding="utf-8") as handle:
+    json.dump(words, handle, indent=2)
 ```
 
----
+## Voiceover Generation
 
-## 2. Local Voice Cloning (Chatterbox)
-Use this for high-end, zero-shot voice cloning (cloning a voice from 5s of audio).
+Use local or API TTS only when the user requests narration. Store generated files in the target project's `public/audio/` folder. Add attribution or licensing notes when required by the chosen tool.
 
-### Installation
-```bash
-git clone https://github.com/resemble-ai/chatterbox
-pip install chatterbox-tts
-```
+## Caption Build Order
 
-### Usage
-Run the local server:
-```bash
-python chatterbox/gradio_tts_turbo_app.py
-```
-Then use the Gradio API or Web UI to generate `.wav` files and drop them into your Remotion `public/` folder.
+1. Generate or obtain voiceover.
+2. Transcribe to word timings.
+3. Import transcript JSON into Remotion.
+4. Render captions from frame ranges.
+5. Still-check crowded frames.
+6. Render a short range around fast speech.
 
----
+## Safety Notes
 
-## 3. High-Readability Subtitle Engine
-Use this React component for a modern "Shorts/Reels" style subtitle engine that builds up context.
-
-```tsx
-export const CinematicSubtitle = ({ words }) => {
-  const frame = useCurrentFrame();
-  const LINGER_FRAMES = 45; // keep words on screen for 1.5s after spoken
-
-  return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center' }}>
-      {words.map((w, i) => {
-        if (frame < w.startFrame || frame > w.endFrame + LINGER_FRAMES) return null;
-        const isActive = frame >= w.startFrame && frame <= w.endFrame;
-
-        return (
-          <span style={{
-            fontSize: '46px',
-            fontWeight: 900,
-            textTransform: 'uppercase',
-            color: isActive ? '#000' : 'rgba(0,0,0,0.6)',
-            backgroundColor: isActive ? '#FFF' : 'transparent',
-            padding: '4px 16px',
-            borderRadius: '12px',
-            textShadow: isActive ? 'none' : '0 0 2px #FFF, 0 0 4px #FFF'
-          }}>
-            {w.word}
-          </span>
-        );
-      })}
-    </div>
-  );
-};
-```
+- Do not clone voices without permission.
+- Do not add generated audio to this skill repository.
+- Do not commit `.env` files or API keys.
+- Keep transcripts free of sensitive information unless the user explicitly wants them stored.

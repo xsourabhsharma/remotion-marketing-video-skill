@@ -1,55 +1,77 @@
-# Audio & Voiceover Synchronization Pipeline
+# Voiceover Mixing Pipeline
 
-Premium SaaS ads use tight audio-visual synchronization to feel dynamic. Voiceover (VO) drives the timing, not the other way around.
+Use this file when a video is driven by narration or when audio quality matters.
 
-## Sound Design Principles
-1. **Music Bed:** Use a single music track (corporate, upbeat, minimal vocals) that runs the full duration. No abrupt cuts, just intro/outro fades.
-2. **SFX Minimalism:** Rely primarily on the VO and music. Avoid heavy sound effects. UI clicks and subtle whooshes are acceptable but should not overpower.
-3. **Loudness Normalization:**
-   - **Voiceover:** Pre-normalize to **-16 LUFS** (consistent loudness).
-   - **Music:** Duck the music underneath the VO, targeting **-24 to -20 LUFS** relative.
+## Workflow
 
-## Synchronization Workflow
-In Remotion, timeline control must be explicit and data-driven based on the audio script.
+1. Obtain or generate the voiceover in the target Remotion project.
+2. Normalize the voiceover before timing visuals.
+3. Transcribe or timestamp the voiceover.
+4. Map transcript beats to scene frames.
+5. Add music and SFX last.
+6. Render and inspect audio sync.
 
-### 1. Script Object Model
-Create an array of beats that map exactly to visual changes.
+## Beat Object
 
-```typescript
-export const scriptBeats = [
-  {
-    id: "hook",
-    startFrame: 0,
-    durationInFrames: 72, // 3 seconds
-    text: "You don't start with a product. You start with a problem.",
-    voAudioFile: "audio/vo_hook.mp3"
-  },
-  {
-    id: "reveal",
-    startFrame: 72,
-    durationInFrames: 120, // 5 seconds
-    text: "Meet Lovio. Generate structure instantly.",
-    voAudioFile: "audio/vo_reveal.mp3"
-  }
-];
-```
-
-### 2. Audio Mapping
-Map transcript lines to timestamps, then map timestamps to frames (based on your FPS, typically 25 or 30).
-Align the `Scene` component's `startFrame` to the VO timeline, rather than using hard-coded guesses.
-
-```tsx
-import { Audio, Sequence, staticFile } from 'remotion';
-
-export const VoiceoverTrack = () => {
-  return (
-    <>
-      {scriptBeats.map((beat) => (
-        <Sequence key={beat.id} from={beat.startFrame} durationInFrames={beat.durationInFrames}>
-          <Audio src={staticFile(beat.voAudioFile)} volume={1} />
-        </Sequence>
-      ))}
-    </>
-  );
+```ts
+export type ScriptBeat = {
+  id: string;
+  startFrame: number;
+  durationInFrames: number;
+  text: string;
+  visual: string;
+  emphasis?: "low" | "medium" | "high";
+  audioSrc?: string;
 };
 ```
+
+## Voiceover Track
+
+```tsx
+import {Audio} from "@remotion/media";
+import {Sequence, staticFile} from "remotion";
+
+export const VoiceoverTrack = ({beats}: {beats: ScriptBeat[]}) => (
+  <>
+    {beats
+      .filter((beat) => beat.audioSrc)
+      .map((beat) => (
+        <Sequence key={beat.id} from={beat.startFrame} durationInFrames={beat.durationInFrames}>
+          <Audio src={staticFile(beat.audioSrc!)} volume={1} />
+        </Sequence>
+      ))}
+  </>
+);
+```
+
+## Music Ducking
+
+Use a volume callback when a music bed should duck under narration:
+
+```tsx
+const narrationRanges = beats.map((beat) => [
+  beat.startFrame,
+  beat.startFrame + beat.durationInFrames,
+]);
+
+const musicVolume = (frame: number) => {
+  const underVoice = narrationRanges.some(([start, end]) => frame >= start - 8 && frame <= end + 8);
+  return underVoice ? 0.12 : 0.26;
+};
+```
+
+## FFmpeg Normalization Examples
+
+Inspect loudness:
+
+```bash
+npx remotion ffmpeg -i input.wav -af loudnorm=I=-16:TP=-1.5:LRA=11 -f null -
+```
+
+Create a normalized file in the target project:
+
+```bash
+npx remotion ffmpeg -i input.wav -af loudnorm=I=-16:TP=-1.5:LRA=11 normalized.wav
+```
+
+Keep normalized outputs in the target video project only. Do not add audio files to this skill.

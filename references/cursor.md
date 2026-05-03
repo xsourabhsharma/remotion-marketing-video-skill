@@ -1,101 +1,98 @@
-# Cursor Animation Reference — Remotion Product Demo
+# Cursor and Interaction Reference
 
-The animated cursor is the most important "demo feel" element. It makes screen recordings look intentional and professional.
+Use this file when simulating cursor movement, taps, hover states, clicks, drag gestures, keyboard input, or UI interaction.
 
----
+## Cursor Model
 
-## AnimatedCursor Component
+Define interaction as data. Keep cursor waypoints near the scene that owns the interaction.
 
-```tsx
-// components/AnimatedCursor.tsx
-import { useCurrentFrame } from 'remotion';
-import { interpolate } from 'remotion';
-
-interface Waypoint {
+```ts
+export type CursorWaypoint = {
   frame: number;
   x: number;
   y: number;
-  click?: boolean;  // set true to trigger click animation at this frame
-}
+  event?: "move" | "hover" | "click" | "drag-start" | "drag-end";
+  label?: string;
+};
+```
 
-interface Props {
-  waypoints: Waypoint[];
+## Animated Cursor
+
+```tsx
+import {interpolate, spring, useCurrentFrame, useVideoConfig} from "remotion";
+
+export const AnimatedCursor: React.FC<{
+  points: CursorWaypoint[];
   color?: string;
   size?: number;
-}
-
-export const AnimatedCursor: React.FC<Props> = ({
-  waypoints,
-  color = '#ffffff',
-  size = 28,
-}) => {
+}> = ({points, color = "#fff", size = 28}) => {
   const frame = useCurrentFrame();
+  const {fps} = useVideoConfig();
 
-  // Extract frame/x/y arrays for interpolation
-  const frames = waypoints.map(w => w.frame);
-  const xs = waypoints.map(w => w.x);
-  const ys = waypoints.map(w => w.y);
+  const frames = points.map((point) => point.frame);
+  const xs = points.map((point) => point.x);
+  const ys = points.map((point) => point.y);
 
-  const x = interpolate(frame, frames, xs, { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
-  const y = interpolate(frame, frames, ys, { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
+  const x = interpolate(frame, frames, xs, {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  });
+  const y = interpolate(frame, frames, ys, {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  });
 
-  // Detect nearest click waypoint
-  const clickWaypoint = waypoints.find(w => w.click && Math.abs(frame - w.frame) < 8);
-  const clickProgress = clickWaypoint
-    ? Math.min(1, Math.max(0, (frame - clickWaypoint.frame) / 6))
+  const click = points.find(
+    (point) => point.event === "click" && frame >= point.frame && frame < point.frame + 10,
+  );
+  const clickSpring = click
+    ? spring({
+        frame: frame - click.frame,
+        fps,
+        config: {damping: 12, stiffness: 320},
+      })
     : 0;
 
-  // Click animation: cursor shrinks then springs back
-  const clickScale = clickWaypoint
-    ? 1 - Math.sin(clickProgress * Math.PI) * 0.3
-    : 1;
-
-  // Ripple effect on click
-  const rippleOpacity = clickWaypoint
-    ? Math.max(0, 1 - clickProgress)
+  const press = click ? interpolate(clickSpring, [0, 0.4, 1], [1, 0.78, 1], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  }) : 1;
+  const ripple = click
+    ? interpolate(frame - click.frame, [0, 10], [0, 1], {
+        extrapolateLeft: "clamp",
+        extrapolateRight: "clamp",
+      })
     : 0;
-  const rippleScale = clickWaypoint ? 1 + clickProgress * 2 : 1;
 
   return (
-    <div
-      style={{
-        position: 'absolute',
-        left: x,
-        top: y,
-        pointerEvents: 'none',
-        zIndex: 9999,
-        transform: `translate(-4px, -4px)`, // offset to cursor tip
-      }}
-    >
-      {/* Ripple on click */}
-      {rippleOpacity > 0 && (
+    <div style={{position: "absolute", left: x, top: y, pointerEvents: "none", zIndex: 1000}}>
+      {click ? (
         <div
           style={{
-            position: 'absolute',
-            width: size * 2,
-            height: size * 2,
-            borderRadius: '50%',
+            position: "absolute",
+            width: size * 1.8,
+            height: size * 1.8,
             border: `2px solid ${color}`,
-            opacity: rippleOpacity * 0.5,
-            transform: `scale(${rippleScale}) translate(-50%, -50%)`,
-            left: size / 2,
-            top: size / 2,
+            borderRadius: "50%",
+            opacity: 0.45 * (1 - ripple),
+            transform: `translate(-50%, -50%) scale(${1 + ripple})`,
           }}
         />
-      )}
-
-      {/* Cursor SVG */}
+      ) : null}
       <svg
         width={size}
         height={size}
         viewBox="0 0 24 24"
-        style={{ transform: `scale(${clickScale})`, filter: `drop-shadow(0 2px 8px rgba(0,0,0,0.5))` }}
+        style={{
+          transform: `translate(-3px, -3px) scale(${press})`,
+          filter: "drop-shadow(0 4px 10px rgba(0,0,0,0.45))",
+        }}
       >
         <path
-          d="M4 2L20 10L12 12L10 20L4 2Z"
+          d="M4 2L20 10.4L12.4 12.1L10.5 20L4 2Z"
           fill={color}
-          stroke="#000"
-          strokeWidth="1"
+          stroke="rgba(0,0,0,0.75)"
+          strokeWidth="1.2"
           strokeLinejoin="round"
         />
       </svg>
@@ -104,104 +101,55 @@ export const AnimatedCursor: React.FC<Props> = ({
 };
 ```
 
----
+## Natural Movement Rules
 
-## Defining Waypoints
+- Pause `6-12` frames before a click.
+- Use diagonals and small arcs, not robotic axis-aligned movement.
+- Add one intermediate waypoint before the target for deceleration.
+- Recoil by `1-4px` after a click.
+- Hide the cursor during purely cinematic scenes.
+- Keep cursor scale consistent with resolution.
 
-Plan cursor movement as a storyboard. Each waypoint = position at a specific frame.
+## Hover and Click State
+
+Use frame ranges, not pointer events:
 
 ```tsx
-// In your ProductDemo.tsx or scene file
-const cursorWaypoints = [
-  { frame: 0,   x: 200,  y: 800 },           // start off-center
-  { frame: 20,  x: 500,  y: 500 },           // move to input box
-  { frame: 30,  x: 500,  y: 500 },           // hover (pause here while typing)
-  { frame: 60,  x: 900,  y: 540, click: true }, // move to Send button, click
-  { frame: 80,  x: 600,  y: 300 },           // move up to watch result
-  { frame: 120, x: 300,  y: 600 },           // move to sidebar
-  { frame: 130, x: 300,  y: 620, click: true }, // click sidebar item
-  { frame: 160, x: 1200, y: 400 },           // move to feature panel
-];
+const isHovered = frame >= 42 && frame <= 68;
+const isPressed = frame >= 62 && frame <= 66;
+
+const buttonStyle = {
+  background: isHovered ? theme.colors.accent : theme.colors.surface,
+  transform: `scale(${isPressed ? 0.98 : isHovered ? 1.015 : 1})`,
+};
 ```
 
-**Tips for natural cursor movement:**
-- Always pause (repeat same x,y for 8–12 frames) before clicking — it feels human
-- Move diagonally, not straight horizontal/vertical
-- Slow down near targets (add an intermediate waypoint 20px before target)
-- After clicking, move cursor slightly away (1–2 pixels "recoil" waypoint)
+## Tap Variant for Mobile
 
----
-
-## Cursor with Highlight Ring (spotlight effect)
+Use a ring and contact flash instead of an arrow cursor:
 
 ```tsx
-// Add a soft highlight ring around cursor for dark UIs
-<div
-  style={{
-    position: 'absolute',
-    width: 60,
-    height: 60,
-    borderRadius: '50%',
-    background: 'radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%)',
-    transform: 'translate(-50%, -50%)',
-    left: x,
-    top: y,
-    pointerEvents: 'none',
-    zIndex: 9998,
-  }}
-/>
-```
-
----
-
-## Click Sound Sync
-
-```tsx
-// In your main video component, sync audio to click frames
-{cursorWaypoints.filter(w => w.click).map((w, i) => (
-  <Audio
-    key={i}
-    src={staticFile('audio/click.mp3')}
-    startFrom={0}
-    // Only play at the click frame
-    volume={frame >= w.frame && frame < w.frame + 24 ? 1 : 0}
+export const TapRing = ({x, y, progress}: {x: number; y: number; progress: number}) => (
+  <div
+    style={{
+      position: "absolute",
+      left: x,
+      top: y,
+      width: 72,
+      height: 72,
+      borderRadius: "50%",
+      border: "3px solid rgba(255,255,255,0.9)",
+      opacity: 1 - progress,
+      transform: `translate(-50%, -50%) scale(${0.65 + progress * 0.8})`,
+    }}
   />
-))}
-```
-
-Better approach — use Sequence:
-```tsx
-{cursorWaypoints.filter(w => w.click).map((w, i) => (
-  <Sequence key={i} from={w.frame} durationInFrames={24}>
-    <Audio src={staticFile('audio/click.mp3')} volume={0.8} />
-  </Sequence>
-))}
-```
-
----
-
-## Hover State Simulation
-
-When cursor is near a button, make the button change state:
-
-```tsx
-const isHovering = (
-  Math.abs(cursorX - buttonX) < 40 &&
-  Math.abs(cursorY - buttonY) < 20
 );
-
-<button style={{
-  background: isHovering ? '#4f46e5' : '#3730a3',
-  transform: isHovering ? 'scale(1.02)' : 'scale(1)',
-  transition: 'none', // NO CSS transitions in Remotion
-}}>
-  Send
-</button>
 ```
 
-Replace with frame check:
-```tsx
-const hoverStartFrame = 28;
-const hoverEndFrame = 60;
-const isHovering = frame >= hoverStartFrame && frame <= hoverEndFrame;
-```
+## Interaction QA
+
+- Cursor target aligns with the visible UI control at the target frame.
+- Hover state starts before the click and ends after the result begins.
+- Click audio, if used, starts on the click frame.
+- Result animation begins within `3-8` frames after the click.
+- Cursor never covers important text for more than a beat.

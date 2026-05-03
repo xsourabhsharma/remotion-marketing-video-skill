@@ -1,44 +1,53 @@
-# Anthropic Design Language for Remotion
+# Editorial Minimal Motion Reference
 
-This playbook contains the core mathematical and visual rules for recreating the highly abstract, sophisticated motion graphics seen in Anthropic (Claude) promotional videos.
+Use this file for tasteful, premium, text-led motion inspired by high-end AI and technology launch videos. Treat brand-specific aesthetics as inspiration only. Do not copy another company's logo, palette, typography, or protected identity.
 
----
+## Visual Direction
 
-## 1. Visual Tokens
-- **Background:** `#F9F8F6` (Alabaster / Warm Paper)
-- **Text:** `#1A1919` (Soft Black)
-- **Accent:** `#D97757` (Claude Terracotta)
-- **Secondary Accent:** `#E5A974` (Claude Peach)
-- **Fonts:** Pair an elegant Serif (`Times New Roman`) for headlines with a clean Sans (`system-ui`) for UI.
+- Warm neutral or deep neutral backgrounds.
+- Large restrained typography.
+- Generous negative space.
+- Abstract data structures instead of literal stock imagery.
+- Slow camera push or parallax.
+- Blur-to-sharp reveals.
+- Minimal color accents.
+- No gratuitous decoration.
 
----
-
-## 2. The Blur-Fade Reveal (BlurFadeText)
-Anthropic avoids "typing" effects. Instead, text blurs into existence.
+## Blur Fade Word Reveal
 
 ```tsx
-export const BlurFadeText: React.FC<{ text: string; startFrame: number }> = ({ text, startFrame }) => {
+import {Easing, interpolate, useCurrentFrame} from "remotion";
+
+export const BlurFadeWords = ({
+  text,
+  start,
+}: {
+  text: string;
+  start: number;
+}) => {
   const frame = useCurrentFrame();
-  const words = text.split(' ');
+  const words = text.split(" ");
 
   return (
     <span>
-      {words.map((word, i) => {
-        const wordStart = startFrame + i * 5;
-        const progress = interpolate(frame, [wordStart, wordStart + 25], [0, 1], { 
-          extrapolateLeft: 'clamp', 
-          extrapolateRight: 'clamp',
-          easing: (t) => 1 - Math.pow(1 - t, 4) // Quartic Ease Out
+      {words.map((word, index) => {
+        const wordStart = start + index * 4;
+        const p = interpolate(frame, [wordStart, wordStart + 24], [0, 1], {
+          easing: Easing.bezier(0.16, 1, 0.3, 1),
+          extrapolateLeft: "clamp",
+          extrapolateRight: "clamp",
         });
-
         return (
-          <span style={{ 
-            display: 'inline-block', 
-            opacity: progress,
-            filter: `blur(${interpolate(progress, [0, 1], [15, 0])}px)`,
-            transform: `translateY(${interpolate(progress, [0, 1], [10, 0])}px)`,
-            marginRight: '0.25em'
-          }}>
+          <span
+            key={`${word}-${index}`}
+            style={{
+              display: "inline-block",
+              marginRight: "0.28em",
+              opacity: p,
+              filter: `blur(${interpolate(p, [0, 1], [14, 0])}px)`,
+              transform: `translateY(${interpolate(p, [0, 1], [14, 0])}px)`,
+            }}
+          >
             {word}
           </span>
         );
@@ -48,38 +57,25 @@ export const BlurFadeText: React.FC<{ text: string; startFrame: number }> = ({ t
 };
 ```
 
----
+## Abstract Data Morph
 
-## 3. The Claude Sparkle (SVG)
-A 4-pointed star made of Bezier curves with a pulsing terracotta gradient.
+Represent "messy to clear" transformation without media:
 
 ```tsx
-export const ClaudeSparkle = () => {
-  const frame = useCurrentFrame();
-  const rotation = (frame * 0.4) % 360;
-  const pulse = Math.sin(frame / 25) * 0.1 + 1;
-
-  return (
-    <div style={{ transform: `rotate(${rotation}deg) scale(${pulse})` }}>
-      <svg viewBox="0 0 100 100" width="100" height="100">
-        <path d="M50 0 C50 40, 60 50, 100 50 C60 50, 50 60, 50 100 C50 60, 40 50, 0 50 C40 50, 50 40, 50 0 Z" fill="#D97757" />
-      </svg>
-    </div>
-  );
-};
+const rows = Array.from({length: 18}, (_, index) => ({
+  id: index,
+  startWidth: 80 + ((index * 37) % 240),
+  endWidth: 220 + (index % 4) * 70,
+  y: index * 22,
+}));
 ```
 
----
+Animate each row's `x`, `width`, `opacity`, and `borderRadius` from scattered lines into a stable grid.
 
-## 4. Abstract Data Morphing
-Instead of showing real PDFs, represent them as "Chaos to Order" data lines.
+## Restraint Rules
 
-1. **Scene 1 (Chaos):** 20 lines of varying widths moving at different horizontal speeds.
-2. **Scene 2 (Order):** Interpolate the width and positions so the lines snap into a clean, grid-like JSON or Document structure.
-
----
-
-## 5. Animation Rules
-- **No Bouncing:** Avoid high-stiffness springs. 
-- **Quartic Easing:** Always use `(t) => 1 - Math.pow(1 - t, 4)` for a deliberate, cinematic feel.
-- **Cinematic Pushing:** Apply a very slow constant scale (e.g., `1.0` to `1.05` over 5 seconds) to give the feeling of a moving camera.
+- Prefer one strong animation over five weak ones.
+- Let premium typography breathe for at least `1.5-2s`.
+- Avoid bouncy springs unless the brand is playful.
+- Keep color accents purposeful.
+- Use blur as a reveal, not as a crutch for unfinished layout.

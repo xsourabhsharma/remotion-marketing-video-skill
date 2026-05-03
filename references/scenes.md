@@ -1,335 +1,139 @@
-# Scene Implementations Reference — Remotion Product Demo
+# Scene Architecture Reference
 
-Each scene is a self-contained React component. It uses `useCurrentFrame()` internally.
-Scenes are composed in the main `ProductDemo.tsx` using `<Sequence>`.
+Use this file when planning story, scene order, composition duration, product type adaptations, or beat timing.
 
----
+## Scene Graph Model
 
-## HookScene — Opening prompt / typewriter hook
+Represent the video as data before coding the visuals:
 
-```tsx
-// scenes/HookScene.tsx
-import { useCurrentFrame, useVideoConfig, interpolate } from 'remotion';
-import { tokens } from '../tokens';
+```ts
+export type SceneKind =
+  | "hook"
+  | "problem"
+  | "ui-reveal"
+  | "feature"
+  | "interaction"
+  | "proof"
+  | "result"
+  | "cta";
 
-interface Props {
-  prompt: string;           // The AI prompt text to type out
-  subtext?: string;         // Optional subtitle below prompt
-}
-
-export const HookScene: React.FC<Props> = ({ prompt, subtext }) => {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
-
-  // Card slides up
-  const cardY = interpolate(frame, [0, 16], [40, 0], { extrapolateRight: 'clamp' });
-  const cardOpacity = interpolate(frame, [0, 12], [0, 1], { extrapolateRight: 'clamp' });
-
-  // Typing
-  const charsPerSecond = 18;
-  const typingDelay = 8; // wait 8 frames before typing starts
-  const charsToShow = Math.floor(
-    interpolate(frame - typingDelay, [0, (prompt.length / charsPerSecond) * fps], [0, prompt.length], {
-      extrapolateLeft: 'clamp',
-      extrapolateRight: 'clamp',
-    })
-  );
-  const showCursor = Math.floor(frame / 8) % 2 === 0;
-
-  return (
-    <div style={{
-      width: '100%', height: '100%',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: tokens.bg,
-    }}>
-      {/* Prompt card */}
-      <div style={{
-        background: tokens.surface,
-        border: `1px solid ${tokens.border}`,
-        borderRadius: 20,
-        padding: '32px 40px',
-        width: 640,
-        boxShadow: tokens.shadowCard,
-        opacity: cardOpacity,
-        transform: `translateY(${cardY}px)`,
-      }}>
-        {/* Prompt text */}
-        <p style={{
-          color: tokens.text,
-          fontSize: 22,
-          fontFamily: tokens.fontHeadline,
-          lineHeight: 1.5,
-          margin: 0,
-          minHeight: 72,
-        }}>
-          {prompt.slice(0, charsToShow)}
-          {showCursor && charsToShow < prompt.length && (
-            <span style={{ color: tokens.accent, opacity: 0.8 }}>|</span>
-          )}
-        </p>
-
-        {/* Toolbar row */}
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          marginTop: 24, paddingTop: 16, borderTop: `1px solid ${tokens.border}`,
-        }}>
-          <div style={{ display: 'flex', gap: 12 }}>
-            {['⚙️', '📎', '✏️'].map((icon, i) => (
-              <div key={i} style={{
-                width: 36, height: 36, borderRadius: 8,
-                border: `1px solid ${tokens.border}`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 16,
-              }}>{icon}</div>
-            ))}
-            <div style={{ color: tokens.textMuted, fontSize: 14, display: 'flex', alignItems: 'center' }}>
-              Import
-            </div>
-          </div>
-          {/* Send button */}
-          <div style={{
-            background: tokens.accent,
-            color: '#fff',
-            padding: '10px 20px',
-            borderRadius: 10,
-            fontSize: 15,
-            fontWeight: 600,
-            fontFamily: tokens.fontHeadline,
-            display: 'flex', alignItems: 'center', gap: 8,
-          }}>
-            ▷ Send
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+export type SceneBeat = {
+  id: string;
+  kind: SceneKind;
+  startFrame: number;
+  durationInFrames: number;
+  headline?: string;
+  narration?: string;
+  visualGoal: string;
+  motionGoal: string;
 };
 ```
 
----
+Generate `startFrame` values from durations instead of hard-coding scattered offsets.
 
-## UIRevealScene — Product UI appears
+## Core Structures
 
-```tsx
-// scenes/UIRevealScene.tsx
-import { useCurrentFrame, spring, useVideoConfig, interpolate, Img, staticFile } from 'remotion';
-import { tokens } from '../tokens';
-import { MockUI } from '../components/MockUI';
+### 15-Second Social Product Hit
 
-interface Props {
-  screenshotSrc?: string;  // If using a screenshot instead of React UI
-}
+- `0-2s` hook: problem or outcome promise.
+- `2-5s` product reveal: show the interface or coded hero object.
+- `5-10s` feature sequence: two fast interaction beats.
+- `10-13s` proof/result: metric, generated output, before-after.
+- `13-15s` CTA: product name and action.
 
-export const UIRevealScene: React.FC<Props> = ({ screenshotSrc }) => {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
+### 30-Second Product Demo
 
-  // Browser window slides up and fades in
-  const s = spring({ frame, fps, config: { damping: 16, stiffness: 150 } });
+- `0-3s` hook.
+- `3-7s` UI reveal.
+- `7-14s` workflow step 1.
+- `14-21s` workflow step 2.
+- `21-26s` result/proof.
+- `26-30s` CTA.
 
-  return (
-    <div style={{
-      width: '100%', height: '100%',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: tokens.bg,
-    }}>
-      {/* Browser chrome wrapper */}
-      <div style={{
-        width: 1400,
-        height: 860,
-        borderRadius: 16,
-        overflow: 'hidden',
-        boxShadow: '0 32px 80px rgba(0,0,0,0.6)',
-        opacity: Math.min(1, s),
-        transform: `translateY(${interpolate(s, [0, 1], [60, 0])}px) scale(${interpolate(s, [0, 1], [0.95, 1])})`,
-        border: '1px solid #333',
-      }}>
-        {/* Browser top bar */}
-        <div style={{
-          height: 44, background: '#1c1c1c',
-          display: 'flex', alignItems: 'center', padding: '0 16px', gap: 8,
-          borderBottom: '1px solid #333',
-        }}>
-          {['#ff5f57','#febc2e','#28c840'].map((c, i) => (
-            <div key={i} style={{ width: 12, height: 12, borderRadius: '50%', background: c }} />
-          ))}
-          {/* URL bar */}
-          <div style={{
-            flex: 1, height: 28, background: '#2a2a2a',
-            borderRadius: 6, margin: '0 80px',
-            display: 'flex', alignItems: 'center',
-            paddingLeft: 12, color: '#666', fontSize: 13,
-          }}>
-            app.yourproduct.com
-          </div>
-        </div>
+### 60-Second SaaS Explainer
 
-        {/* Product UI */}
-        {screenshotSrc
-          ? <Img src={staticFile(screenshotSrc)} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          : <MockUI />
-        }
-      </div>
-    </div>
-  );
-};
-```
+- `0-4s` problem.
+- `4-8s` product positioning.
+- `8-28s` three mechanism beats.
+- `28-42s` outcome/proof.
+- `42-54s` mini walkthrough or social proof.
+- `54-60s` CTA.
 
----
+## Product Type Adaptations
 
-## FeatureScene — Highlight one feature
+### Web App or SaaS Dashboard
+
+Build a browser shell, sidebar, top nav, main canvas, cards, tables, charts, and command palette in React. Use screenshots only when the user provides real product media.
+
+Motion language:
+
+- Browser shell enters with `rise()` or `scaleIn()`.
+- Cursor clicks one primary control.
+- Cards and metrics update in staggered order.
+- Camera pushes toward the result.
+
+### AI or Prompt-Based Tool
+
+Start with intent. Type or reveal a prompt, click generate, show streaming state, then transform into final output. Use string slicing for typewriter text and staggered lines for generated content.
+
+### Mobile App
+
+Create device frames in CSS. Use tap rings instead of arrow cursors. Keep text larger and touch targets obvious. Avoid tiny dashboard details inside portrait canvases.
+
+### Developer Tool or CLI
+
+Use monospace terminal panels, typed commands, log lines, diff highlights, and progress bars. Keep command output realistic for the domain.
+
+### Abstract Motion Graphics
+
+Use procedural shapes, grids, data streams, text masks, SVG paths, particles, and camera movement. Tie every abstract element to the story: chaos to order, latency to speed, scattered to organized, manual to automated.
+
+## Composition Pattern
 
 ```tsx
-// scenes/FeatureScene.tsx
-import { useCurrentFrame, spring, useVideoConfig, interpolate } from 'remotion';
-import { tokens } from '../tokens';
+import {AbsoluteFill, Sequence} from "remotion";
+import {beats} from "./beats";
 
-interface Props {
-  title: string;
-  description: string;
-  icon?: string;
-  highlightArea?: { x: number; y: number; width: number; height: number };
-}
-
-export const FeatureScene: React.FC<Props> = ({ title, description, icon }) => {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
-
-  const labelSpring = spring({ frame: frame - 8, fps, config: { damping: 14 } });
-
-  return (
-    <div style={{
-      position: 'absolute', bottom: 60, left: 60,
-      display: 'flex', flexDirection: 'column', gap: 8,
-    }}>
-      {/* Feature badge */}
-      <div style={{
-        background: 'rgba(99,102,241,0.15)',
-        border: '1px solid rgba(99,102,241,0.4)',
-        borderRadius: 12,
-        padding: '12px 20px',
-        display: 'flex', alignItems: 'center', gap: 12,
-        opacity: Math.min(1, labelSpring),
-        transform: `translateY(${interpolate(Math.min(1, labelSpring), [0,1], [16, 0])}px)`,
-        backdropFilter: 'blur(8px)',
-      }}>
-        {icon && <span style={{ fontSize: 24 }}>{icon}</span>}
-        <div>
-          <div style={{ color: '#fff', fontWeight: 700, fontSize: 18 }}>{title}</div>
-          <div style={{ color: '#aaa', fontSize: 14, marginTop: 2 }}>{description}</div>
-        </div>
-      </div>
-    </div>
-  );
+const sceneMap = {
+  hook: HookScene,
+  "ui-reveal": UIRevealScene,
+  feature: FeatureScene,
+  result: ResultScene,
+  cta: CtaScene,
 };
+
+export const ProductVideo = () => (
+  <AbsoluteFill style={{background: "#08090b"}}>
+    {beats.map((beat) => {
+      const Scene = sceneMap[beat.kind];
+      return (
+        <Sequence
+          key={beat.id}
+          name={beat.id}
+          from={beat.startFrame}
+          durationInFrames={beat.durationInFrames}
+        >
+          <Scene beat={beat} />
+        </Sequence>
+      );
+    })}
+  </AbsoluteFill>
+);
 ```
 
----
+## Copy Rules
 
-## CTAScene — Closing call to action
+- One message per scene.
+- Short headline, shorter subline.
+- Prefer concrete action verbs over vague claims.
+- Keep UI labels legible at final platform size.
+- Avoid paragraphs unless the scene is intentionally text-led.
+- Make captions and on-screen copy complement each other instead of duplicating every word.
 
-```tsx
-// scenes/CTAScene.tsx
-import { useCurrentFrame, spring, useVideoConfig, interpolate, Img, staticFile } from 'remotion';
-import { tokens } from '../tokens';
+## Story Quality Checklist
 
-interface Props {
-  productName: string;
-  tagline: string;
-  cta: string;
-  logoSrc?: string;
-}
-
-export const CTAScene: React.FC<Props> = ({ productName, tagline, cta, logoSrc }) => {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
-
-  const logoSpring = spring({ frame, fps, config: { damping: 16, stiffness: 180 } });
-  const taglineSpring = spring({ frame: frame - 12, fps, config: { damping: 14 } });
-  const ctaSpring = spring({ frame: frame - 24, fps, config: { damping: 12, stiffness: 160 } });
-
-  return (
-    <div style={{
-      width: '100%', height: '100%',
-      display: 'flex', flexDirection: 'column',
-      alignItems: 'center', justifyContent: 'center',
-      background: tokens.bg, gap: 24,
-    }}>
-      {/* Logo / Product name */}
-      <div style={{
-        opacity: Math.min(1, logoSpring),
-        transform: `scale(${interpolate(Math.min(1, logoSpring), [0, 1], [0.8, 1])})`,
-        textAlign: 'center',
-      }}>
-        {logoSrc
-          ? <Img src={staticFile(logoSrc)} style={{ height: 64 }} />
-          : <div style={{ fontSize: 48, fontWeight: 800, color: '#fff', fontFamily: tokens.fontHeadline }}>{productName}</div>
-        }
-      </div>
-
-      {/* Tagline */}
-      <div style={{
-        fontSize: 28,
-        color: tokens.textMuted,
-        fontFamily: tokens.fontHeadline,
-        opacity: Math.min(1, taglineSpring),
-        transform: `translateY(${interpolate(Math.min(1, taglineSpring), [0,1], [20,0])}px)`,
-        textAlign: 'center',
-      }}>
-        {tagline}
-      </div>
-
-      {/* CTA Button */}
-      <div style={{
-        background: tokens.accent,
-        color: '#fff',
-        padding: '16px 40px',
-        borderRadius: 14,
-        fontSize: 20,
-        fontWeight: 700,
-        fontFamily: tokens.fontHeadline,
-        opacity: Math.min(1, ctaSpring),
-        transform: `scale(${interpolate(Math.min(1, ctaSpring), [0,1], [0.9, 1])})`,
-        boxShadow: `0 8px 32px rgba(99,102,241,0.4)`,
-        marginTop: 8,
-      }}>
-        {cta} →
-      </div>
-    </div>
-  );
-};
-```
-
----
-
-## Scene Timing Reference Table
-
-At 24fps:
-
-| Seconds | Frames |
-|---|---|
-| 0.5s | 12 |
-| 1s | 24 |
-| 1.5s | 36 |
-| 2s | 48 |
-| 2.5s | 60 |
-| 3s | 72 |
-| 4s | 96 |
-| 5s | 120 |
-| 8s | 192 |
-| 10s | 240 |
-| 30s | 720 |
-| 60s | 1440 |
-
----
-
-## Adapting Scenes for Any Product
-
-To make these universal, replace:
-- `<MockUI />` → your product's React components or a `<Img>` screenshot
-- `tokens.accent` → your brand color
-- `prompt` text → your AI prompt or feature description
-- `productName` / `tagline` → your product copy
-- Cursor waypoints → x/y positions matching your UI layout
-
-Everything else (spring configs, fade timings, card styles) stays the same.
+- Hook states a problem, outcome, or visual surprise in the first `2s`.
+- Every scene changes the viewer's understanding.
+- Every cursor/tap action causes a visible result.
+- Product name appears by the midpoint or earlier unless mystery is intentional.
+- CTA fits the user's goal: try, book, watch, install, join, or learn.

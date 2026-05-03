@@ -1,196 +1,129 @@
-# Animation Reference — Remotion Product Demo
+# Motion System Reference
 
-All animations use these Remotion imports:
-```tsx
-import { useCurrentFrame, useVideoConfig, interpolate, spring } from 'remotion';
+Use this file when implementing animation timing, transitions, scene rhythm, or camera movement.
+
+## Core Principles
+
+- Drive every visible change from `useCurrentFrame()` and `useVideoConfig()`.
+- Use `interpolate()` for deterministic timing and `Easing.bezier()` for art-directed curves.
+- Use `spring()` for physical UI pops, not for every move.
+- Clamp most interpolations with `extrapolateLeft: "clamp"` and `extrapolateRight: "clamp"`.
+- Derive multiple CSS properties from one normalized progress value.
+- Avoid CSS transitions, CSS animations, wall-clock timers, and random values that change per render.
+
+## Timing Presets
+
+At `30fps`:
+
+- Micro feedback: `5-8` frames
+- Card or panel entrance: `10-16` frames
+- Major scene move: `18-30` frames
+- Camera push: `60-180` frames
+- Text word stagger: `2-5` frames per word
+- Hard cut with polish overlay: `6-12` frames
+
+Use these curves:
+
+```ts
+import {Easing, interpolate} from "remotion";
+
+export const curves = {
+  enter: Easing.bezier(0.16, 1, 0.3, 1),
+  exit: Easing.in(Easing.cubic),
+  standard: Easing.bezier(0.4, 0, 0.2, 1),
+  editorial: Easing.bezier(0.45, 0, 0.55, 1),
+  accentPop: Easing.bezier(0.34, 1.56, 0.64, 1),
+};
+
+export const progress = (
+  frame: number,
+  start: number,
+  duration: number,
+  easing = curves.enter,
+) =>
+  interpolate(frame, [start, start + duration], [0, 1], {
+    easing,
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  });
 ```
 
----
+## Reusable Animation Helpers
 
-## Fade In
+```ts
+import {Easing, interpolate, spring} from "remotion";
 
-```tsx
-export const fadeIn = (frame: number, startFrame = 0, durationFrames = 20) =>
-  interpolate(frame - startFrame, [0, durationFrames], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
-```
+export const fade = (p: number) => ({opacity: p});
 
-Usage:
-```tsx
-const opacity = fadeIn(frame, 0, 16);
-<div style={{ opacity }}>...</div>
-```
-
----
-
-## Slide Up + Fade In
-
-```tsx
-export const slideUp = (frame: number, startFrame = 0, distance = 40, durationFrames = 20) => ({
-  opacity: interpolate(frame - startFrame, [0, durationFrames], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }),
-  transform: `translateY(${interpolate(frame - startFrame, [0, durationFrames], [distance, 0], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' })}px)`,
+export const rise = (p: number, distance = 28) => ({
+  opacity: p,
+  transform: `translateY(${interpolate(p, [0, 1], [distance, 0])}px)`,
 });
-```
 
----
-
-## Spring Pop (for UI elements, buttons, cards)
-
-```tsx
-export const popIn = (frame: number, startFrame = 0, fps = 24) => {
-  const s = spring({ frame: frame - startFrame, fps, config: { damping: 12, stiffness: 200, mass: 0.8 } });
-  return {
-    transform: `scale(${interpolate(s, [0, 1], [0.7, 1])})`,
-    opacity: interpolate(s, [0, 0.3], [0, 1], { extrapolateRight: 'clamp' }),
-  };
-};
-```
-
----
-
-## Stagger (for lists, checklists, bullet points)
-
-```tsx
-// Each child gets a delayed start
-export const StaggeredList = ({ items, startFrame, fps }: Props) => {
-  const frame = useCurrentFrame();
-  return (
-    <div>
-      {items.map((item, i) => {
-        const itemStart = startFrame + i * 8; // 8 frames between each
-        const s = spring({ frame: frame - itemStart, fps, config: { damping: 14 } });
-        return (
-          <div
-            key={i}
-            style={{
-              opacity: Math.min(1, s),
-              transform: `translateX(${interpolate(s, [0, 1], [-20, 0])}px)`,
-            }}
-          >
-            {item}
-          </div>
-        );
-      })}
-    </div>
-  );
-};
-```
-
----
-
-## Slow Zoom (Ken Burns — for background/product screenshots)
-
-```tsx
-export const slowZoom = (frame: number, totalFrames: number, startScale = 1, endScale = 1.08) => ({
-  transform: `scale(${interpolate(frame, [0, totalFrames], [startScale, endScale])})`,
-  transformOrigin: 'center center',
+export const scaleIn = (p: number, from = 0.96) => ({
+  opacity: p,
+  transform: `scale(${interpolate(p, [0, 1], [from, 1])})`,
 });
-```
 
----
-
-## Slide In From Right
-
-```tsx
-export const slideInRight = (frame: number, startFrame = 0, durationFrames = 24, distance = 100) => ({
-  opacity: interpolate(frame - startFrame, [0, durationFrames], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }),
-  transform: `translateX(${interpolate(frame - startFrame, [0, durationFrames], [distance, 0], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' })}px)`,
+export const cameraPush = (frame: number, duration: number, amount = 0.04) => ({
+  transform: `scale(${interpolate(frame, [0, duration], [1, 1 + amount], {
+    easing: Easing.inOut(Easing.cubic),
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  })})`,
 });
-```
 
----
-
-## Word-by-Word Stagger (for headlines)
-
-```tsx
-export const WordStagger = ({ text, startFrame, fps }: Props) => {
-  const frame = useCurrentFrame();
-  const words = text.split(' ');
-  return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25em' }}>
-      {words.map((word, i) => {
-        const s = spring({ frame: frame - startFrame - i * 4, fps, config: { damping: 16 } });
-        return (
-          <span
-            key={i}
-            style={{
-              opacity: Math.min(1, Math.max(0, s)),
-              transform: `translateY(${interpolate(Math.min(1, Math.max(0, s)), [0, 1], [20, 0])}px)`,
-              display: 'inline-block',
-            }}
-          >
-            {word}
-          </span>
-        );
-      })}
-    </div>
+export const springProgress = (frame: number, fps: number, start: number) =>
+  Math.min(
+    1,
+    Math.max(
+      0,
+      spring({
+        frame: frame - start,
+        fps,
+        config: {damping: 18, stiffness: 180, mass: 0.8},
+      }),
+    ),
   );
-};
 ```
 
----
+## Scene Transitions
 
-## Highlight / Glow Pulse (for accent elements)
+Prefer simple transitions: fade, slide, wipe, or camera-match cuts. Use `@remotion/transitions` when the transition is part of scene structure.
 
 ```tsx
-export const glowPulse = (frame: number, period = 48) => {
-  const t = (frame % period) / period;
-  const intensity = Math.sin(t * Math.PI * 2) * 0.5 + 0.5;
-  return {
-    boxShadow: `0 0 ${interpolate(intensity, [0, 1], [8, 24])}px rgba(99, 102, 241, ${interpolate(intensity, [0, 1], [0.3, 0.7])})`,
-  };
-};
+import {TransitionSeries, linearTiming} from "@remotion/transitions";
+import {fade} from "@remotion/transitions/fade";
+
+export const Scenes = () => (
+  <TransitionSeries>
+    <TransitionSeries.Sequence durationInFrames={90}>
+      <HookScene />
+    </TransitionSeries.Sequence>
+    <TransitionSeries.Transition
+      presentation={fade()}
+      timing={linearTiming({durationInFrames: 12})}
+    />
+    <TransitionSeries.Sequence durationInFrames={120}>
+      <ProductScene />
+    </TransitionSeries.Sequence>
+  </TransitionSeries>
+);
 ```
 
----
+Remember: transition duration overlaps adjacent scenes and shortens total duration. Calculate composition duration from scene durations minus transition durations.
 
-## Progress Bar Fill
+## Choreography Rules
 
-```tsx
-export const ProgressBar = ({ startFrame, endFrame, color }: Props) => {
-  const frame = useCurrentFrame();
-  const progress = interpolate(frame, [startFrame, endFrame], [0, 100], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
-  return (
-    <div style={{ background: '#2a2a2a', borderRadius: 4, height: 6, width: '100%' }}>
-      <div style={{ background: color, width: `${progress}%`, height: '100%', borderRadius: 4, transition: 'none' }} />
-    </div>
-  );
-};
-```
+- Move the object that owns attention first; secondary elements follow by `2-6` frames.
+- Enter faster than exit for UI elements; use stronger ease-out on entry and ease-in on exit.
+- Keep exits shorter than entrances unless the exit is a narrative moment.
+- Avoid animating too many large elements at once.
+- Keep important text still long enough to read: at least `1.2s` for short labels and `2s+` for headline copy.
+- Maintain spatial logic: if a panel slides in from the right, dismiss or transform it along a related path.
 
----
+## Motion Blur and Texture
 
-## Fade Out (for scene exits)
+Use `@remotion/motion-blur` only for fast camera or object moves. Avoid global blur on text-heavy scenes because it reduces readability.
 
-```tsx
-export const fadeOut = (frame: number, startFrame: number, durationFrames = 12) =>
-  interpolate(frame - startFrame, [0, durationFrames], [1, 0], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
-```
-
----
-
-## Scene Crossfade Wrapper
-
-```tsx
-// Wrap each scene in this for smooth overlapping transitions
-export const CrossfadeScene = ({ children, durationInFrames }: Props) => {
-  const frame = useCurrentFrame();
-  const FADE = 12;
-  const opacity =
-    frame < FADE
-      ? interpolate(frame, [0, FADE], [0, 1])
-      : frame > durationInFrames - FADE
-      ? interpolate(frame, [durationInFrames - FADE, durationInFrames], [1, 0])
-      : 1;
-  return <div style={{ opacity, width: '100%', height: '100%' }}>{children}</div>;
-};
-```
-
----
-
-## Tips
-
-- **Never use CSS transitions** inside Remotion — they fight with frame-based rendering. Always use `interpolate` or `spring`.
-- **spring() stiffness guide**: 80–120 = slow/bouncy, 150–200 = medium, 250–400 = snappy/fast
-- **spring() damping guide**: 8–10 = bouncy, 12–15 = normal, 20+ = no bounce
-- **Always clamp** interpolate with `extrapolateLeft: 'clamp', extrapolateRight: 'clamp'` unless you want overflow.
-- Use `Math.min(1, Math.max(0, spring(...)))` when spring overshoots would cause visual issues.
+Use procedural texture with CSS gradients, SVG noise, `@remotion/noise`, or small generated primitives. Do not add raster texture assets to the skill.

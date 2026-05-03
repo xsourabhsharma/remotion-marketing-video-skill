@@ -1,53 +1,88 @@
-# AI SaaS Ad Narrative Templates
+# SaaS Narrative Templates
 
-When asked to create a premium SaaS ad (like Lovio, LangEase, or Teamble), use these specialized narrative structures. These templates define the exact timing and sequence of scenes for Remotion.
+Use this file for high-conversion product demos, SaaS ads, AI tool launches, and app walkthroughs.
 
-## 1. Problem → Solution → Outcome (Lovio Style)
-*Duration: ~70-75 seconds | ~8-12 distinct beats*
-This structure is perfect for high-level brand intros or major feature launches.
+## Template A: Problem to Product to Proof
 
-**Structure:**
-1. **Hook (2–3s):** Start with a problem-first hook ("You don't start with a product. You start with a problem.").
-2. **Reveal (4–5s):** Introduce the product with a simple phrase ("Meet [Product].").
-3. **Mechanism (12–15s):** 2–3 beats explaining how it works in simple steps. Show UI panels sliding in from the sides or bottom.
-4. **Outcome (4–6s):** Language about speed, scale, or quality ("Generate structure instantly", "See it working").
-5. **CTA (3–5s):** Invite to start, try, or sign up.
+Best for landing-page videos and launch posts.
 
-**Remotion Implementation (`Scene` Graph):**
-```typescript
-export type SceneType = 'ProblemHook' | 'Reveal' | 'Mechanism' | 'Outcome' | 'CTA';
+Duration: `30-45s`
 
-export interface Scene {
-  id: string;
-  startFrame: number;
-  durationInFrames: number; // Target: 72 frames for 3s (at 24fps)
-  type: SceneType;
-  props: any;
-}
-```
+1. Problem hook: name the pain in one line.
+2. Product reveal: show the product solving it.
+3. Mechanism 1: demonstrate the first input or action.
+4. Mechanism 2: show automation or transformation.
+5. Proof: metric, before/after, saved time, quality lift, or generated result.
+6. CTA: product name, tagline, action.
 
-## 2. Mini-Tutorial (LangEase Style)
-*Duration: ~20-30 seconds | 3-5 distinct beats*
-Best for showing a quick "aha" moment or feature snippet.
+Motion:
 
-**Structure:**
-1. **Time Promise (2-3s):** "I'll show you how in under 30 seconds."
-2. **Step 1 (Input) (4-5s):** "Drop in any document, video, or audio."
-3. **Step 2 (AI Transformation) (4-5s):** "AI translates into multiple languages instantly."
-4. **Step 3 (Extra Value) (4-5s):** "Need subtitles or voiceover? We've got that."
-5. **Outcome & CTA (3-5s):** "Try it now."
+- Problem uses restrained text and subtle background tension.
+- Reveal uses browser shell or hero UI entering with camera push.
+- Mechanisms use cursor/tap and UI state changes.
+- Proof uses number ticker, comparison, or check sequence.
 
-## 3. Workflow Transformation (Teamble / Bud Style)
-*Duration: ~90-100 seconds | Many micro-beats (2-4s each) driven by UI steps*
-Best for data-heavy apps, dashboards, or complex workflows that involve AI analysis.
+## Template B: Mini Tutorial
 
-**Structure:**
-1. **Current Behavior (4s):** Show raw text / poor feedback / manual process.
-2. **AI Analysis (10s):** Scores, labels (Specificity, Tone, Actionability), insights popping up.
-3. **AI Suggestions (10s):** Re-written text, generated assets, dashboards sliding over.
-4. **Impact (4s):** Better scores (e.g., Number ticker animating from 9/100 to 92/100), automated output.
+Best for social posts and "how it works" clips.
 
-**Beat Timing Guidelines:**
-- **Hook:** 2-3 seconds.
-- **Each Step:** 4-6 seconds.
-- **Visual Transformations:** At most every 3-4 seconds to keep attention.
+Duration: `15-30s`
+
+1. Time promise: "Build X in 20 seconds" or equivalent.
+2. Input: paste, upload, connect, select, or ask.
+3. Action: AI/process/workflow runs.
+4. Output: useful result appears.
+5. CTA: save, try, install, book, or join.
+
+Motion:
+
+- Every beat needs a visible cause and effect.
+- Keep each step under `5s`.
+- Use captions when voiceover exists or platform is likely muted.
+
+## Template C: Workflow Transformation
+
+Best for complex dashboards, B2B tools, and AI operations products.
+
+Duration: `45-75s`
+
+1. Show current manual workflow.
+2. Highlight friction: scattered data, slow review, low score, manual tabs.
+3. Introduce product as an operating layer.
+4. Show three connected automations.
+5. Reveal final dashboard/result.
+6. Close with quantified impact.
+
+Motion:
+
+- Use "chaos to order" layout transitions.
+- Make data streams converge into cards, charts, or decisions.
+- Use camera movement to tie steps into one workflow.
+
+## Template D: Pure Motion Graphics Explainer
+
+Best when there is no UI yet.
+
+Duration: `20-60s`
+
+1. Abstract problem.
+2. System model.
+3. Transformation.
+4. Outcome.
+5. CTA or final statement.
+
+Visual motifs:
+
+- Nodes becoming a graph.
+- Lines becoming a structured grid.
+- Text fragments becoming a clear sentence.
+- Noise becoming signal.
+- Manual steps collapsing into one control.
+
+## Beat Writing Rules
+
+- Write all beats before creating components.
+- Target one verb per beat: connect, analyze, generate, approve, publish.
+- Keep each visual tied to a product promise.
+- Use proof beats to break up purely aspirational language.
+- Show the result earlier than feels comfortable; polish can follow.
