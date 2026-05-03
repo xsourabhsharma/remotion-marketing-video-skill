@@ -10,19 +10,29 @@ if (-not (Test-Path -LiteralPath $skillPath)) {
 
 $skill = Get-Content -Raw -LiteralPath $skillPath
 
-if ($skill -notmatch "(?s)^---\s+.*?name:\s*remotion-product-demo-video.*?description:\s*.*?---") {
-  throw "SKILL.md frontmatter must include name and description"
-}
-
 $frontmatterMatch = [regex]::Match($skill, "(?s)^---\s*(.*?)\s*---")
 if (-not $frontmatterMatch.Success) {
   throw "Missing YAML frontmatter"
 }
 
 $frontmatter = $frontmatterMatch.Groups[1].Value
+$frontmatterLines = $frontmatter -split "\r?\n" | Where-Object { $_.Trim().Length -gt 0 }
+if ($frontmatterLines.Count -ne 2) {
+  throw "SKILL.md frontmatter must contain exactly name and description fields"
+}
+
+$expectedNameLine = "name: remotion-marketing-video"
+if (($frontmatterLines[0]).Trim() -ne $expectedNameLine) {
+  throw "Expected first frontmatter field: $expectedNameLine"
+}
+
 $nameMatch = [regex]::Match($frontmatter, "(?m)^name:\s*([a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?)\s*$")
 if (-not $nameMatch.Success) {
   throw "Skill name must use lowercase letters, numbers, and hyphens, and be <=64 characters"
+}
+
+if ($nameMatch.Groups[1].Value -match "--") {
+  throw "Skill name must not contain consecutive hyphens"
 }
 
 $descriptionMatch = [regex]::Match($frontmatter, "(?ms)^description:\s*(.+?)(?:\r?\n[a-zA-Z0-9_-]+:|\z)")
@@ -31,6 +41,14 @@ if (-not $descriptionMatch.Success) {
 }
 
 $description = $descriptionMatch.Groups[1].Value.Trim()
+if ($description.StartsWith('"') -and $description.EndsWith('"')) {
+  $description = $description.Substring(1, $description.Length - 2)
+}
+
+if ([string]::IsNullOrWhiteSpace($description)) {
+  throw "Description must be non-empty"
+}
+
 if ($description.Length -gt 1024) {
   throw "Description is too long ($($description.Length) chars). Keep it <=1024 for Agent Skills spec compatibility."
 }
@@ -38,6 +56,16 @@ if ($description.Length -gt 1024) {
 $wordCount = ([regex]::Matches($skill, "\b[\w'-]+\b")).Count
 if ($wordCount -gt 2500) {
   throw "SKILL.md is too large ($wordCount words). Move details to references/."
+}
+
+$allSkillFiles = @(Get-ChildItem -LiteralPath $root -Recurse -Filter "SKILL.md" -File | Where-Object { $_.FullName -notmatch "\\.git\\" })
+if ($allSkillFiles.Count -ne 1) {
+  $list = ($allSkillFiles | ForEach-Object { $_.FullName }) -join [Environment]::NewLine
+  throw "Expected exactly one SKILL.md at repository root. Found:$([Environment]::NewLine)$list"
+}
+
+if ((Resolve-Path -LiteralPath $allSkillFiles[0].FullName).Path -ne (Resolve-Path -LiteralPath $skillPath).Path) {
+  throw "The only SKILL.md must be at repository root"
 }
 
 $badCharCodes = @(0x00E2, 0x00F0, 0x0178, 0x0153, 0x20AC)

@@ -1,20 +1,71 @@
-# Remotion Product Demo Video Skill
+# Remotion Marketing Video Skill
 
-An agent skill for creating and editing premium Remotion videos: motion graphics, product demos, SaaS promos, UI walkthroughs, social ads, explainers, kinetic typography, screen-recording edits, podcast clips, captions, audio/SFX workflows, and export QA.
+[![skills.sh](https://skills.sh/b/xsourabhsharma/claude-marketing-video-remotion)](https://skills.sh/xsourabhsharma/claude-marketing-video-remotion)
 
-This repository intentionally contains no bundled media assets. The skill teaches agents to build visuals in code first, and to use user-provided screenshots, audio, recordings, logos, or generated files only inside the target Remotion project.
+An Agent Skill for creating premium Remotion-based marketing videos with React and code-first animation. It helps agents plan, build, preview, revise, and render product demos, SaaS promos, UI walkthroughs, social ads, explainers, captioned clips, and motion graphics for software products.
 
-## What This Skill Improves
+Use this skill when an agent needs a structured video-production workflow: research and brief, asset inventory, scene planning, design tokens, deterministic Remotion animation, browser/Studio preview, user approval, and final render QA.
 
-- Code-first motion graphics with React, SVG, CSS, data, and Remotion timing.
-- Research-backed creative plans, asset inventories, and approval gates.
-- Product demo and general video-editing structures for 15s, 30s, 60s, and longer videos.
-- Deterministic animation rules using frames, not CSS transitions.
-- Version-safe package guidance for `remotion` and `@remotion/*`.
-- Cursor/tap simulation, captions, audio timing, localhost Studio preview, render approval, QA, and troubleshooting.
-- Source-backed notes from current Remotion docs, official Remotion skills, npm package checks, and platform upload specs.
+## Install
 
-## Structure
+Install the skill with the open `skills` CLI:
+
+```bash
+npx skills add xsourabhsharma/claude-marketing-video-remotion
+```
+
+To install globally or target a specific agent, use the standard skills CLI flags:
+
+```bash
+npx skills add xsourabhsharma/claude-marketing-video-remotion -g
+npx skills add xsourabhsharma/claude-marketing-video-remotion -a claude-code
+npx skills add xsourabhsharma/claude-marketing-video-remotion -a codex
+```
+
+## Use In Claude Code And Other Agents
+
+After installation, check the agent's skill list. In Claude Code or compatible agent UIs, use `/skills` if supported, or run:
+
+```bash
+npx skills list
+```
+
+Then ask for a Remotion marketing video. The root skill is:
+
+```text
+remotion-marketing-video
+```
+
+## Example Prompts
+
+```text
+Use the remotion-marketing-video skill to create a 30-second SaaS product demo for my AI analytics app.
+```
+
+```text
+Build a vertical social ad in Remotion from these product screenshots, with captions, cursor motion, and a final CTA.
+```
+
+```text
+Plan and implement a premium UI walkthrough video for my web app, then start Remotion Studio for review before rendering.
+```
+
+```text
+Turn this landing page copy into a code-first motion graphics explainer with Remotion and React.
+```
+
+```text
+Improve my existing Remotion promo: tighten the hook, fix timing, add captions, preview locally, and prepare the render command.
+```
+
+## What The Skill Includes
+
+- One root-level `SKILL.md` following the Agent Skills specification.
+- Focused reference playbooks under `references/`.
+- A PowerShell validator under `scripts/validate-skill.ps1`.
+- No bundled media assets, credentials, fonts, screenshots, audio, or video.
+
+## Repository Structure
 
 ```text
 SKILL.md
@@ -39,16 +90,6 @@ scripts/
   validate-skill.ps1
 ```
 
-## Use
-
-Copy or clone this folder into an agent skills directory, then ask for work such as:
-
-```text
-Use the remotion-product-demo-video skill to create a 30-second SaaS product demo.
-```
-
-The agent should load `SKILL.md`, then load only the reference files needed for the task.
-
 ## Validate
 
 Run:
@@ -57,25 +98,33 @@ Run:
 powershell -ExecutionPolicy Bypass -File .\scripts\validate-skill.ps1
 ```
 
-The validator checks frontmatter, `SKILL.md` size, referenced files, mojibake, unfinished placeholder markers, and accidental bundled media files.
+The validator checks the root `SKILL.md` frontmatter, Agent Skills naming rules, single-skill structure, referenced files, accidental bundled media, and common text-quality issues.
 
-## Publish Readiness
+## Discoverability
 
-For skills.sh/GitHub discovery, keep:
+For skills.sh and `npx skills` discovery, this repository should remain:
 
-- A valid `SKILL.md` with clear `name` and `description`.
-- A focused README with usage and validation.
-- A license file.
-- No bundled user media or credentials.
-- GitHub topics such as `agent-skills`, `remotion`, `motion-graphics`, and `video-editing`.
+- Public on GitHub.
+- Tagged with the GitHub topic `agent-skills`.
+- Focused on one root skill: `remotion-marketing-video`.
+- Released or tagged with a version such as `v1.1.0`.
 
-Recommended local checks before publishing:
+## Contributing
 
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\validate-skill.ps1
-gh skill publish --dry-run  # requires a GitHub CLI build that includes gh skill
-```
+To extend the skill:
+
+- Keep one root-level `SKILL.md`; do not add nested `SKILL.md` files unless intentionally turning the repo into a multi-skill collection.
+- Keep the main `SKILL.md` concise and route detailed guidance to `references/`.
+- Add new templates as focused reference files, such as `references/youtube_launch_ads.md` or `references/mobile_app_promos.md`.
+- Do not commit generated media, user assets, API keys, `.env` files, fonts, screenshots, videos, or audio.
+- Run the validator before opening a PR or publishing a release.
 
 ## Current Research Snapshot
 
-As of May 3, 2026, `npm view remotion version` reported `4.0.456`, and checked `@remotion/*` companion packages matched that version. Always verify current versions before critical package edits.
+As of May 3, 2026, the skills CLI documentation supports installing GitHub repositories with:
+
+```bash
+npx skills add owner/repo
+```
+
+The Agent Skills specification requires `SKILL.md` frontmatter with `name` and `description`, and this repository follows that root-skill format.

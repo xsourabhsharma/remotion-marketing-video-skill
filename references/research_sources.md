@@ -100,7 +100,8 @@ Use this file to understand why the skill recommends its current workflow. Verif
   - Description should include concrete trigger keywords.
   - Keep main `SKILL.md` concise and route detailed material to references.
 
-- GitHub CLI skill publishing docs: https://cli.github.com/manual/gh_skill_publish
-  - `gh skill publish --dry-run` validates without publishing.
-  - `gh skill publish --tag vX.Y.Z` publishes with a version tag.
-  - The `agent-skills` repository topic helps discovery.
+- skills.sh documentation: https://skills.sh/docs and https://skills.sh/docs/cli
+  - Install GitHub-hosted skills with `npx skills add owner/repo`.
+  - The CLI supports targeting agents such as Claude Code and Codex.
+  - skills.sh ranking is based on anonymous CLI install telemetry.
+  - Add a README badge with `https://skills.sh/b/owner/repo`.
