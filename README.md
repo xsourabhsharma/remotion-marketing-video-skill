@@ -1,6 +1,6 @@
 # Remotion Marketing Video Skill
 
-[![skills.sh](https://skills.sh/b/xsourabhsharma/claude-marketing-video-remotion)](https://skills.sh/xsourabhsharma/claude-marketing-video-remotion)
+[![skills.sh](https://skills.sh/b/xsourabhsharma/remotion-marketing-video-skill)](https://skills.sh/xsourabhsharma/remotion-marketing-video-skill)
 
 An Agent Skill for creating premium Remotion-based marketing videos with React and code-first animation. It helps agents plan, build, preview, revise, and render product demos, SaaS promos, UI walkthroughs, social ads, explainers, captioned clips, and motion graphics for software products.
 
@@ -11,15 +11,15 @@ Use this skill when an agent needs a structured video-production workflow: resea
 Install the skill with the open `skills` CLI:
 
 ```bash
-npx skills add xsourabhsharma/claude-marketing-video-remotion
+npx skills add xsourabhsharma/remotion-marketing-video-skill
 ```
 
 To install globally or target a specific agent, use the standard skills CLI flags:
 
 ```bash
-npx skills add xsourabhsharma/claude-marketing-video-remotion -g
-npx skills add xsourabhsharma/claude-marketing-video-remotion -a claude-code
-npx skills add xsourabhsharma/claude-marketing-video-remotion -a codex
+npx skills add xsourabhsharma/remotion-marketing-video-skill -g
+npx skills add xsourabhsharma/remotion-marketing-video-skill -a claude-code
+npx skills add xsourabhsharma/remotion-marketing-video-skill -a codex
 ```
 
 ## Use In Claude Code And Other Agents
@@ -118,13 +118,3 @@ To extend the skill:
 - Add new templates as focused reference files, such as `references/youtube_launch_ads.md` or `references/mobile_app_promos.md`.
 - Do not commit generated media, user assets, API keys, `.env` files, fonts, screenshots, videos, or audio.
 - Run the validator before opening a PR or publishing a release.
-
-## Current Research Snapshot
-
-As of May 3, 2026, the skills CLI documentation supports installing GitHub repositories with:
-
-```bash
-npx skills add owner/repo
-```
-
-The Agent Skills specification requires `SKILL.md` frontmatter with `name` and `description`, and this repository follows that root-skill format.
