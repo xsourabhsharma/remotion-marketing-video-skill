@@ -116,5 +116,6 @@ To extend the skill:
 - Keep one root-level `SKILL.md`; do not add nested `SKILL.md` files unless intentionally turning the repo into a multi-skill collection.
 - Keep the main `SKILL.md` concise and route detailed guidance to `references/`.
 - Add new templates as focused reference files, such as `references/youtube_launch_ads.md` or `references/mobile_app_promos.md`.
+- Keep documentation updates focused so examples and install commands stay easy to scan.
 - Do not commit generated media, user assets, API keys, `.env` files, fonts, screenshots, videos, or audio.
 - Run the validator before opening a PR or publishing a release.
