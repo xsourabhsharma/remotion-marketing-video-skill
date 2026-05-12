@@ -58,6 +58,8 @@ Turn this landing page copy into a code-first motion graphics explainer with Rem
 Improve my existing Remotion promo: tighten the hook, fix timing, add captions, preview locally, and prepare the render command.
 ```
 
+Keep prompts specific about audience, aspect ratio, and source assets so the first scene plan starts from the right constraints.
+
 ## What The Skill Includes
 
 - One root-level `SKILL.md` following the Agent Skills specification.
